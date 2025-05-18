@@ -27,6 +27,7 @@ jobs:
 
     - name: Ejecutar pruebas con cobertura
       run: |
+        mkdir -p reports
         pytest --cov=validators --cov-report=xml
 
     - name: Ejecutar análisis SonarQube
