@@ -27,13 +27,7 @@ jobs:
 
     - name: Ejecutar pruebas con cobertura
       run: |
-        pytest --cov=validators --cov-report=xml --junitxml=reports/results.xml
-
-    - name: Subir reporte de pruebas
-      uses: actions/upload-artifact@v3
-      with:
-        name: resultados-pruebas
-        path: reports/results.xml
+        pytest --cov=validators --cov-report=xml
 
     - name: Ejecutar análisis SonarQube
       env:
@@ -46,4 +40,4 @@ jobs:
           -Dsonar.sources=. \
           -Dsonar.host.url=http://localhost:9000 \
           -Dsonar.login=${SONAR_TOKEN} \
-          -Dsonar.coverageReportPaths=coverage.xml
+          -Dsonar.python.coverage.reportPaths=coverage.xml
