@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quality Testing & Metrics - UTB</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: linear-gradient(to right, #74ebd5, #ACB6E5); color: #333; margin: 0; padding: 0; }
+        .header { text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.8); box-shadow: 0px 4px 6px rgba(0,0,0,0.1); }
+        .profile { text-align: center; background: white; padding: 20px; margin: 20px auto; width: 60%; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); }
+        .container { max-width: 450px; margin: 50px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); }
+        label { font-weight: bold; display: block; margin-top: 15px; }
+        input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; }
+        button { width: 100%; padding: 10px; background: #007bff; color: white; font-size: 18px; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px; }
+        button:hover { background: #0056b3; }
+        .message { text-align: center; font-weight: bold; color: red; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <img src="https://saviox.utb.edu.co/d2l/lp/navbars/17263/theme/viewimage/2340218/view?v=20.25.4.20292" alt="UTB Logo">
+        <h1>Quality Testing & Metrics</h1>
+    </div>
+
+    <div class="profile">
+        <p>👨‍💻 Name: Brayan Diaz Arrieta</p>
+        <p>📧 Email: Arrietab@utb.edu.co</p>
+    </div>
+
+    <div class="container">
+        <h2>🚀 Register Below</h2>
+        <form id="registration_form">
+            <label for="fullname">Full Name:</label>
+            <input type="text" id="fullname" name="fullname" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <label for="confirm_password">Confirm Password:</label>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+
+            <button id="submit_button" type="submit">Register</button>
+        </form>
+
+        <p class="message" id="validation_message"></p>
+    </div>
+
+    <script>
+        document.getElementById("registration_form").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            let fullname = document.getElementById("fullname").value.trim();
+            let email = document.getElementById("email").value.trim();
+            let password = document.getElementById("password").value.trim();
+            let confirmPassword = document.getElementById("confirm_password").value.trim();
+            let messageElement = document.getElementById("validation_message");
+
+            let errors = [];
+            if (fullname.length < 3) errors.push("❌ Full Name must be at least 3 characters.");
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("❌ Invalid email format.");
+            if (password.length < 6 || !/[!@#$%^&*]/.test(password)) errors.push("❌ Password must be at least 6 characters and include a special symbol.");
+            if (password !== confirmPassword) errors.push("❌ Passwords do not match.");
+
+            if (errors.length > 0) {
+                messageElement.textContent = errors.join(" | ");
+                messageElement.style.color = "red";
+            } else {
+                const response = await fetch("/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fullname, email, password })
+                });
+
+                const result = await response.json();
+                messageElement.textContent = result.message;
+                messageElement.style.color = result.status === "success" ? "green" : "red";
+            }
+        });
+    </script>
+
+</body>
+</html>
