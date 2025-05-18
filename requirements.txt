@@ -1,3 +1,16 @@
-selenium
+# Requisitos para la aplicación web
+flask
+
+# Pruebas unitarias
 pytest
-openpyxl
+pytest-cov
+
+# Cobertura de código
+coverage
+
+# Validación con Selenium si usas pruebas funcionales (opcional, si ya lo usas)
+selenium
+openpyxl  
+
+# Recomendado para CI/CD o análisis de código
+requests
