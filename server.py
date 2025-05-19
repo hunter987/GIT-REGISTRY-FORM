@@ -1,3 +1,4 @@
+#SERVER.PY
 from flask import Flask, jsonify, request, send_from_directory
 import sqlite3
 import os
