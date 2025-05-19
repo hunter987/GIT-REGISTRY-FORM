@@ -10,7 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from tkinter import Tk, filedialog
 import validators
-# ---- Funciones de validación personalizadas (ejemplo básico) ----
+# ---- Funciones de validación personalizadas (ejemplo básico) -----
 def validar_nombre(name):
     return bool(name.strip())
 

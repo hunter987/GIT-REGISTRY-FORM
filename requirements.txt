@@ -14,3 +14,4 @@ openpyxl
 
 # Recomendado para CI/CD o análisis de código
 requests
+flask_wtf
