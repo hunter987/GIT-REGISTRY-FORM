@@ -1,7 +1,14 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 
-driver = webdriver.Chrome()  # Asegúrate que chromedriver está en PATH
+# Configurar Chrome para entorno sin interfaz gráfica (CI/CD)
+options = Options()
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+
+driver = webdriver.Chrome(options=options)
 driver.get("http://127.0.0.1:5000/")
 
 def test_case(fullname, email, pwd, conf, expected_msg):
@@ -18,7 +25,7 @@ def test_case(fullname, email, pwd, conf, expected_msg):
     msg = driver.find_element(By.ID, "msg").text
     assert msg == expected_msg, f"Esperaba '{expected_msg}', pero salió '{msg}'"
 
-# Ejemplos de prueba
+# Casos de prueba
 test_case("Juan", "juan@mail.com", "Abc123", "Abc123", "Registro exitoso")
 test_case("", "juan@mail.com", "Abc123", "Abc123", "Nombre inválido")
 test_case("Juan", "juanmail.com", "Abc123", "Abc123", "Email inválido")
