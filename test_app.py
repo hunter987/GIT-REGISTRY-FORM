@@ -1,57 +1,55 @@
-from flask import Flask, request, jsonify, render_template_string
-from flask_wtf import CSRFProtect
+def create_app():
+    app = Flask(__name__)
+    app.secret_key = get_secret_key()
+    configure_app(app)
+    register_blueprints(app)
+    return app
 
-app = Flask(__name__)
-app.secret_key = 'clave-segura-para-csrf'  # Requerida para CSRFProtect
-csrf = CSRFProtect(app)
 
-# HTML con formulario que hace fetch POST con JSON (sin cookies de sesión)
-form_html = """
-<!-- Formulario sin protección CSRF solo para uso con API JSON -->
-<form id="form" method="post" action="/submit">
-  <input name="fullname" id="fullname" />
-  <input name="email" id="email" />
-  <input name="password" id="password" />
-  <input name="confirm_password" id="confirm_password" />
-  <button type="submit">Enviar</button>
-</form>
-<div id="msg"></div>
-<script>
-document.getElementById('form').onsubmit = async e => {
-  e.preventDefault();
-  const data = {
-    fullname: fullname.value,
-    email: email.value,
-    password: password.value,
-    confirm_password: confirm_password.value
-  };
-  const res = await fetch('/submit', {
-    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)
-  });
-  const json = await res.json();
-  document.getElementById('msg').innerText = json.message;
-}
-</script>
-"""
+def get_secret_key():
+    return os.getenv("FLASK_SECRET_KEY", "dev")
 
-@app.route('/')
-def home():
-    return render_template_string(form_html)
 
-# ❗ CSRF deshabilitado específicamente en este endpoint JSON solo para desarrollo / API externa sin cookies.
-@csrf.exempt
-@app.route('/submit', methods=['POST'])
-def submit():
-    d = request.json
-    if not d['fullname'].strip():
-        return jsonify(status='Error', message='Nombre inválido')
-    if '@' not in d['email']:
-        return jsonify(status='Error', message='Email inválido')
-    if len(d['password']) < 6:
-        return jsonify(status='Error', message='Contraseña corta')
-    if d['password'] != d['confirm_password']:
-        return jsonify(status='Error', message='Contraseñas no coinciden')
-    return jsonify(status='OK', message='Registro exitoso')
+def configure_app(app):
+    env = os.getenv("ENV", "development").lower()
+    is_production = env == "production"
 
-if __name__ == '__main__':
-    app.run()
+    app.config['DEBUG'] = not is_production
+
+    if is_production:
+        configure_production(app)
+    else:
+        configure_development(app)
+
+
+def configure_production(app):
+    configure_ssl(app)
+    configure_database(app, use_prod_db=True)
+
+
+def configure_development(app):
+    configure_database(app, use_prod_db=False)
+
+
+def configure_ssl(app):
+    if os.getenv("USE_SSL", "false").lower() == "true":
+        from flask_sslify import SSLify
+        SSLify(app)
+
+
+def configure_database(app, use_prod_db):
+    use_external_db = os.getenv("USE_DB", "false").lower() == "true"
+    if use_prod_db and use_external_db:
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db' if use_prod_db else 'sqlite:///dev.db'
+
+
+def register_blueprints(app):
+    if os.getenv("USE_BLUEPRINTS", "false").lower() == "true":
+        from .routes import main_bp
+        app.register_blueprint(main_bp)
+
+    if os.getenv("ENABLE_API", "false").lower() == "true":
+        from .api import api_bp
+        app.register_blueprint(api_bp, url_prefix="/api")
