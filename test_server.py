@@ -38,7 +38,7 @@ def test_register_success(client):
 
 def test_register_duplicate_email(client):
     data = {
-        "fullname": "Juan Perez",
+        "fullname": "Juan Diaz",
         "email": "juanperez@example.com",
         "password": "P@ssword1"
     }
