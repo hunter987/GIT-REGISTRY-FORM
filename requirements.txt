@@ -15,5 +15,4 @@ openpyxl
 # Recomendado para CI/CD o análisis de código
 requests
 flask_wtf
-sqlite3
-werkzeug.security
+werkzeug  # Se mantiene sin `.security`
