@@ -4,7 +4,7 @@ import validators
 import json
 import secrets
 
-# ---------------------- FIXTURE ----------------------
+# ---------------------- FIXTURE -----------------------
 
 @pytest.fixture
 def client():

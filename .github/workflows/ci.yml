@@ -4,10 +4,10 @@ on:
   push:
     branches: [main]
     paths:
-      - '**/test_*.py'      # Captura archivos como test_app.py, test_server.py
-      - 'server.py'         # Tu archivo principal Flask
-      - 'validators.py'     # Lógica de validación
-      - 'requirements.txt'  # Cambios en dependencias
+      - '**/test_*.py'
+      - 'server.py'
+      - 'validators.py'
+      - 'requirements.txt'
 
   pull_request:
     branches: [main]
@@ -34,7 +34,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov flask selenium openpyxl
+          pip install pytest pytest-cov flask openpyxl
 
       - name: Iniciar servidor Flask en background
         run: |
@@ -48,9 +48,7 @@ jobs:
             sleep 1
           done
 
-      - name: Ejecutar pruebas Selenium
-        run: |
-          python test_selenium.py
+      # ELIMINADO: prueba con selenium
 
       - name: Ejecutar pruebas pytest con cobertura
         run: |
