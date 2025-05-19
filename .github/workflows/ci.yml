@@ -4,16 +4,16 @@ on:
   push:
     branches: [main]
     paths:
-      - 'test_server.py'
-      - 'test_validators.py'
+      - 'tests/test_server.py'
+      - 'tests/test_validators.py'
       - 'server.py'
       - 'validators.py'
       - 'requirements.txt'
   pull_request:
     branches: [main]
     paths:
-      - 'test_server.py'
-      - 'test_validators.py'
+      - 'tests/test_server.py'
+      - 'tests/test_validators.py'
       - 'server.py'
       - 'validators.py'
       - 'requirements.txt'
@@ -37,10 +37,10 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov
 
-      - name: Ejecutar pruebas en server y validators
+      - name: Ejecutar pruebas en tests/
         run: |
           mkdir -p reports
-          pytest test_server.py test_validators.py --cov=server --cov=validators --cov-report=xml:reports/coverage.xml
+          pytest tests/ --cov=server --cov=validators --cov-report=xml:reports/coverage.xml
 
       - name: Descargar e instalar SonarScanner
         run: |
@@ -58,5 +58,5 @@ jobs:
             -Dsonar.login=${SONAR_TOKEN} \
             -Dsonar.python.coverage.reportPaths=reports/coverage.xml \
             -Dsonar.sources=server.py,validators.py \
-            -Dsonar.tests=test_server.py,test_validators.py \
-            -Dsonar.test.inclusions=test_server.py,test_validators.py
+            -Dsonar.tests=tests/ \
+            -Dsonar.test.inclusions=tests/test_server.py,tests/test_validators.py
