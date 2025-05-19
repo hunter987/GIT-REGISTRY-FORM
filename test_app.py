@@ -1,8 +1,13 @@
 from flask import Flask, request, jsonify, render_template_string
+from flask_wtf import CSRFProtect
 
 app = Flask(__name__)
+app.secret_key = 'clave-segura-para-csrf'  # Requerida para CSRFProtect
+csrf = CSRFProtect(app)
 
+# HTML con formulario que hace fetch POST con JSON (sin cookies de sesión)
 form_html = """
+<!-- Formulario sin protección CSRF solo para uso con API JSON -->
 <form id="form" method="post" action="/submit">
   <input name="fullname" id="fullname" />
   <input name="email" id="email" />
@@ -33,6 +38,8 @@ document.getElementById('form').onsubmit = async e => {
 def home():
     return render_template_string(form_html)
 
+# ❗ CSRF deshabilitado específicamente en este endpoint JSON solo para desarrollo / API externa sin cookies.
+@csrf.exempt
 @app.route('/submit', methods=['POST'])
 def submit():
     d = request.json
