@@ -6,11 +6,13 @@ on:
     paths:
       - 'tests/**'
       - '**/*_test.py'
+      - 'app.py'
   pull_request:
     branches: [main]
     paths:
       - 'tests/**'
       - '**/*_test.py'
+      - 'app.py'
 
 jobs:
   run-tests-and-sonarcloud:
