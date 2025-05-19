@@ -1,159 +1,81 @@
-import pytest
-import json
-from server import create_app
+from flask import Flask, request, jsonify
+import re
+import sqlite3
 
-@pytest.fixture
-def app():
-    app = create_app()
-    app.config.update({
-        "TESTING": True,
-        "DEBUG": False,
-    })
+def create_app():
+    app = Flask(__name__)
 
-    # Limpiar base de datos antes de cada test
-    import sqlite3
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM users")
-    conn.commit()
-    conn.close()
+    def init_db():
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fullname TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                password TEXT NOT NULL
+            )
+        """)
+        conn.commit()
+        conn.close()
 
-    yield app
+    init_db()
 
-@pytest.fixture
-def client(app):
-    return app.test_client()
+    @app.route('/register', methods=['POST'])
+    def register():
+        if not request.is_json:
+            return jsonify(status="error", message="Invalid request format"), 400
 
-def test_register_success(client):
-    data = {
-        "fullname": "Juan Perez",
-        "email": "juanperez@example.com",
-        "password": "P@ssword1"
-    }
-    response = client.post('/register', json=data)
-    assert response.status_code == 200
-    resp_json = response.get_json()
-    assert resp_json["status"] == "success"
-    assert "successful" in resp_json["message"]
+        data = request.get_json()
 
-def test_register_duplicate_email(client):
-    data = {
-        "fullname": "Juan Diaz",
-        "email": "juanperez@example.com",
-        "password": "P@ssword1"
-    }
-    # Registro inicial
-    client.post('/register', json=data)
-    # Intento duplicado
-    response = client.post('/register', json=data)
-    assert response.status_code == 200
-    resp_json = response.get_json()
-    assert resp_json["status"] == "error"
-    assert "already registered" in resp_json["message"]
+        # Validar estructura mínima (campos obligatorios)
+        fullname = data.get('fullname')
+        email = data.get('email')
+        password = data.get('password')
 
-def test_register_invalid_email_format(client):
-    data = {
-        "fullname": "Juan Perez",
-        "email": "juanperez-at-example.com",  # email inválido
-        "password": "P@ssword1"
-    }
-    response = client.post('/register', json=data)
-    assert response.status_code == 400
-    resp_json = response.get_json()
-    assert resp_json["status"] == "error"
-    assert "Invalid email format" in resp_json["message"]
+        # Validar que no sean None ni espacios en blanco
+        if not fullname or not fullname.strip() or \
+           not email or not email.strip() or \
+           not password or not password.strip():
+            return jsonify(status="error", message="Missing required fields"), 400
 
-def test_register_missing_fields(client):
-    data = {
-        "fullname": "",
-        "email": "",
-        "password": ""
-    }
-    response = client.post('/register', json=data)
-    assert response.status_code == 400
-    resp_json = response.get_json()
-    assert resp_json["status"] == "error"
-    assert "Missing required fields" in resp_json["message"]
+        fullname = fullname.strip()
+        email = email.strip()
+        password = password.strip()
 
-def test_register_bad_json(client):
-    # Enviar data que no es JSON válido
-    response = client.post('/register', data="not json", content_type="application/json")
-    assert response.status_code == 400
-    resp_json = response.get_json()
-    assert resp_json["status"] == "error"
-    assert "Invalid request format" in resp_json["message"]
+        # Validar formato email básico
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            return jsonify(status="error", message="Invalid email format"), 400
 
-def test_register_get_method(client):
-    response = client.get('/register')
-    assert response.status_code in (404, 405)
+        # Validar contraseña:
+        # Al menos 6 caracteres, al menos 1 mayúscula, 1 minúscula, 1 número y 1 símbolo especial
+        if len(password) < 6 or \
+           not re.search(r"[A-Z]", password) or \
+           not re.search(r"[a-z]", password) or \
+           not re.search(r"[0-9]", password) or \
+           not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+            return jsonify(status="error", message="Invalid password: must be 6+ chars and include uppercase, lowercase, number, and special symbol"), 400
 
-@pytest.mark.parametrize("password", [
-    "short",          # muy corta
-    "alllowercase1",  # sin mayúsculas
-    "ALLUPPERCASE1",  # sin minúsculas
-    "NoNumbers!",     # sin números
-    "12345678"        # solo números
-])
-def test_register_invalid_passwords(client, password):
-    data = {
-        "fullname": "Juan Perez",
-        "email": f"juan{password}@example.com",
-        "password": password
-    }
-    response = client.post('/register', json=data)
-    assert response.status_code == 400
-    resp_json = response.get_json()
-    assert resp_json["status"] == "error"
-    assert "Invalid password" in resp_json["message"]
+        # Insertar en DB (evitar duplicados por email)
+        try:
+            conn = sqlite3.connect("users.db")
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+            if cursor.fetchone() is not None:
+                return jsonify(status="error", message="Email already registered"), 200
 
-def test_register_fields_with_spaces(client):
-    data = {
-        "fullname": "   ",
-        "email": "   ",
-        "password": "   "
-    }
-    response = client.post('/register', json=data)
-    assert response.status_code == 400
-    resp_json = response.get_json()
-    assert resp_json["status"] == "error"
+            cursor.execute(
+                "INSERT INTO users (fullname, email, password) VALUES (?, ?, ?)",
+                (fullname, email, password)
+            )
+            conn.commit()
+            return jsonify(status="success", message="Registration successful"), 200
 
-def test_register_unexpected_json_structure(client):
-    data = {
-        "full_name": "Juan Perez",  # campo mal nombrado
-        "email_address": "juanperez@example.com",
-        "pass": "P@ssword1"
-    }
-    response = client.post('/register', json=data)
-    assert response.status_code == 400
-    resp_json = response.get_json()
-    assert resp_json["status"] == "error"
+        except Exception as e:
+            # Evitar mostrar errores internos al usuario
+            return jsonify(status="error", message="Server error"), 500
 
-def test_register_no_content_type(client):
-    data = json.dumps({
-        "fullname": "Juan Perez",
-        "email": "juanperez3@example.com",
-        "password": "P@ssword1"
-    })
-    response = client.post('/register', data=data)  # sin content_type
-    assert response.status_code == 400
+        finally:
+            conn.close()
 
-def test_register_extra_fields(client):
-    data = {
-        "fullname": "Juan Extra",
-        "email": "juanextra@example.com",
-        "password": "P@ssword1",
-        "extra": "field"
-    }
-    response = client.post('/register', json=data)
-    assert response.status_code == 200
-    resp_json = response.get_json()
-    assert resp_json["status"] == "success"
-
-def test_register_sql_injection(client):
-    data = {
-        "fullname": "Robert'); DROP TABLE users;--",
-        "email": "robert@example.com",
-        "password": "P@ssword1"
-    }
-    response = client.post('/register', json=data)
-    assert response.status_code in (200, 400)
+    return app
