@@ -207,4 +207,4 @@ def test_register_sql_injection(client, init_database):
     })
     assert response.status_code == 400
     assert "❌ Invalid email format" in response.json["message"]
-    #...#
+    #....#

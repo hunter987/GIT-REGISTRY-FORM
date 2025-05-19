@@ -37,6 +37,11 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov
 
+      - name: Configurar PYTHONPATH para reconocimiento de módulos
+        run: |
+          echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
+          echo "PYTHONPATH configurado en: $PWD"
+
       - name: Ejecutar pruebas en tests/
         run: |
           mkdir -p reports
