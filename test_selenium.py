@@ -1,17 +1,27 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import os
 
-# Configurar Chrome para entorno sin interfaz gráfica (CI/CD)
 options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 
 driver = webdriver.Chrome(options=options)
-driver.get("http://127.0.0.1:5000/")
+
+# Ruta absoluta al archivo form.html dentro de static
+path_html = os.path.abspath("static/form.html")
+url = f"file://{path_html}"
+driver.get(url)
+
+wait = WebDriverWait(driver, 10)
 
 def test_case(fullname, email, pwd, conf, expected_msg):
+    wait.until(EC.presence_of_element_located((By.ID, "fullname")))
+
     driver.find_element(By.ID, "fullname").clear()
     driver.find_element(By.ID, "fullname").send_keys(fullname)
     driver.find_element(By.ID, "email").clear()
@@ -22,7 +32,9 @@ def test_case(fullname, email, pwd, conf, expected_msg):
     driver.find_element(By.ID, "confirm_password").send_keys(conf)
     driver.find_element(By.TAG_NAME, "button").click()
 
+    wait.until(EC.presence_of_element_located((By.ID, "msg")))
     msg = driver.find_element(By.ID, "msg").text
+
     assert msg == expected_msg, f"Esperaba '{expected_msg}', pero salió '{msg}'"
 
 # Casos de prueba
