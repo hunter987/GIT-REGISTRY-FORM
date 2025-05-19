@@ -42,7 +42,7 @@ def test_register_duplicate_email(client):
         "email": "juanperez@example.com",
         "password": "P@ssword1"
     }
-    # Registro inicial
+    # Registro inicial-
     client.post('/register', json=data)
     # Intento duplicado
     response = client.post('/register', json=data)
