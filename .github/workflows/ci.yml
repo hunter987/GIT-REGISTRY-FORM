@@ -4,14 +4,18 @@ on:
   push:
     branches: [main]
     paths:
-      - 'test/**'
-      - '**/*_test.py'
+      - '**/test_*.py'      # Captura archivos como test_app.py, test_server.py
+      - 'server.py'         # Tu archivo principal Flask
+      - 'validators.py'     # Lógica de validación
+      - 'requirements.txt'  # Cambios en dependencias
 
   pull_request:
     branches: [main]
     paths:
-      - 'test/**'
-      - '**/*_test.py'
+      - '**/test_*.py'
+      - 'server.py'
+      - 'validators.py'
+      - 'requirements.txt'
 
 jobs:
   run-tests-and-sonarcloud:
@@ -26,7 +30,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Instalar dependencias-
+      - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
@@ -34,7 +38,7 @@ jobs:
 
       - name: Iniciar servidor Flask en background
         run: |
-          export FLASK_APP=app.py
+          export FLASK_APP=server.py
           nohup flask run --host=127.0.0.1 --port=5000 &
 
       - name: Esperar a que el servidor Flask arranque
@@ -46,7 +50,7 @@ jobs:
 
       - name: Ejecutar pruebas Selenium
         run: |
-          python tests/test_selenium.py
+          python test_selenium.py
 
       - name: Ejecutar pruebas pytest con cobertura
         run: |
